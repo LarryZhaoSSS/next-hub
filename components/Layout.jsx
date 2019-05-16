@@ -1,15 +1,16 @@
-// import Link from 'next/link'
 import { useState, useCallback } from 'react'
 import { Layout, Icon, Input, Avatar, Tooltip, Dropdown, Menu } from 'antd'
 import Container from './Container'
 import getConfig from 'next/config'
-import {connect} from 'react-redux'
-import {logout} from '../store/store'
+import { connect } from 'react-redux'
+import { logout } from '../store/store'
+import { withRouter } from 'next/router'
 console.log(getConfig)
 const { Header, Content, Footer } = Layout
 const { publicRuntimeConfig } = getConfig()
 console.log(publicRuntimeConfig)
-function Lay ({ children, user, logout }) {
+import axios from 'axios'
+function Lay({ children, user, logout, router }) {
   const [search, setSearch] = useState('')
   const handleSearchChange = useCallback(event => {
     setSearch(event.target.value)
@@ -17,9 +18,9 @@ function Lay ({ children, user, logout }) {
   console.log('--------user------')
   console.log(user)
   const handleOnSearch = useCallback(() => {}, [])
-  const handleLogout = useCallback(()=>{
+  const handleLogout = useCallback(() => {
     logout()
-  },[])
+  }, [logout])
   const githubIconStyle = {
     color: 'white',
     fontSize: 40,
@@ -27,6 +28,19 @@ function Lay ({ children, user, logout }) {
     paddingTop: 10,
     marginRight: 20
   }
+  const handleGotoOAuth = useCallback((e)=>{
+    e.preventDefault()
+    axios.get(`/prepare-auth?url=${router.asPath}`).then(res=>{
+      if (res.status === 200) {
+        location.href = publicRuntimeConfig.OAUTH_URL
+      } else {
+        console.log('jump fail', res)
+      }
+    }).catch(err=>{
+      console.log(err)
+    })
+    
+  },[router])
   const footerStyle = {
     textAlign: 'center'
   }
@@ -67,7 +81,7 @@ function Lay ({ children, user, logout }) {
                 </Dropdown>
               ) : (
                 <Tooltip title='点击登陆'>
-                  <a href={publicRuntimeConfig.OAUTH_URL}>
+                  <a href={`/prepare-auth?url=${router.asPath}`}>
                     <Avatar size={40} icon='user' />
                   </a>
                 </Tooltip>
@@ -114,13 +128,15 @@ function Lay ({ children, user, logout }) {
     </Layout>
   )
 }
-export default connect(function mapState(state) {
-  return {
-    user: state.user
+export default connect(
+  function mapState(state) {
+    return {
+      user: state.user
+    }
+  },
+  function mapReducer(dispatch) {
+    return {
+      logout: () => dispatch(logout())
+    }
   }
-}, function mapReducer(dispatch){
-  return {
-    logout: ()=>dispatch(logout())
-  }
-})(Lay)
-
+)(withRouter(Lay))
