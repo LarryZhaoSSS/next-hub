@@ -1,17 +1,37 @@
 import App, { Container } from 'next/app'
 import { Provider } from 'react-redux'
-
+import Router from 'next/router'
 import 'antd/dist/antd.css'
-
 import Layout from '../components/Layout'
-
+import PageLoaing from '../components/PageLoading'
 import testHoc from '../lib/with-redux'
-
+import Link from 'next/link'
 class MyApp extends App {
   state = {
-    context: 'value'
+    context: 'value',
+    loading: false
+  }
+  startLoading = () => {
+    this.setState({
+      loading: true
+    })
+  }
+  stopLoading = () => {
+    this.setState({
+      loading: false
+    })
+  }
+  componentDidMount() {
+    Router.events.on('routeChangeStart', this.startLoading)
+    Router.events.on('routeChangeComplete', this.stopLoading)
+    Router.events.on('routeChangeError', this.stopLoading)
   }
 
+  componentWillUnmount() {
+    Router.events.off('routeChangeStart', this.startLoading)
+    Router.events.off('routeChangeComplete', this.stopLoading)
+    Router.events.off('routeChangeError', this.stopLoading)
+  }
   static async getInitialProps(ctx) {
     const { Component } = ctx
     console.log('app init')
@@ -29,11 +49,15 @@ class MyApp extends App {
 
     return (
       <Container>
-          <Provider store={reduxStore}>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
-          </Provider>
+        <Provider store={reduxStore}>
+          {this.state.loading === true ? <PageLoaing /> : null}
+          <Layout>
+            <Link href='/detail'>
+              <a>todetail </a>
+            </Link>
+            <Component {...pageProps} />
+          </Layout>
+        </Provider>
       </Container>
     )
   }
