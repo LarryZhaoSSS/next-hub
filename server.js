@@ -9,6 +9,7 @@ const Redis = require('ioredis')
 const RedisSessionStore = require('./server/session-store')
 const myConfig = require('./config')
 const auth = require('./server/auth')
+const api = require('./server/api')
 console.log('-----myConfig')
 console.log(myConfig)
 const redis = new Redis({
@@ -30,7 +31,7 @@ app.prepare().then(() => {
   server.use(session(SESSION_CONFIG, server))
   auth(server)
   // 配置处理github OAuth的登录
-
+  api(server)
   router.get('/api/user/info', async ctx => {
     const user = ctx.session.userInfo
     if (!user) {
