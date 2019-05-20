@@ -27,7 +27,7 @@ class MyApp extends App {
     Router.events.on('routeChangeComplete', this.stopLoading)
     Router.events.on('routeChangeError', this.stopLoading)
     axios.get('/github/search/repositories?q=react').then(res=>{
-      console.log(res)
+      // console.log(res)
     })
    
   }
@@ -57,9 +57,6 @@ class MyApp extends App {
         <Provider store={reduxStore}>
           {this.state.loading === true ? <PageLoaing /> : null}
           <Layout>
-            <Link href='/detail'>
-              <a>todetail </a>
-            </Link>
             <Component {...pageProps} />
           </Layout>
         </Provider>

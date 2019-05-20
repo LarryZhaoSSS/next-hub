@@ -5,7 +5,7 @@ Detail.getInitialProps = () => {
   return new Promise((resolve)=>{
     setTimeout(()=>{
       resolve({})
-    },2000)
+    },1000)
   })
 }
 export default Detail

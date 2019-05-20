@@ -5,19 +5,24 @@ import getConfig from 'next/config'
 import { connect } from 'react-redux'
 import { logout } from '../store/store'
 import { withRouter } from 'next/router'
+import Link from 'next/link'
 console.log(getConfig)
 const { Header, Content, Footer } = Layout
 const { publicRuntimeConfig } = getConfig()
 console.log(publicRuntimeConfig)
 import axios from 'axios'
 function Lay({ children, user, logout, router }) {
-  const [search, setSearch] = useState('')
-  const handleSearchChange = useCallback(event => {
-    setSearch(event.target.value)
+  const urlQuery = router.query && router.query.query
+  const [search, setSearch] = useState(urlQuery || '')
+  
+  const handleSearchChange = useCallback(e => {
+    setSearch(e.target.value)
   }, [])
   console.log('--------user------')
   console.log(user)
-  const handleOnSearch = useCallback(() => {}, [])
+    const handleSearch = useCallback(() => {
+      router.push(`/search?query=${search}`)
+    })
   const handleLogout = useCallback(() => {
     logout()
   }, [logout])
@@ -28,19 +33,24 @@ function Lay({ children, user, logout, router }) {
     paddingTop: 10,
     marginRight: 20
   }
-  const handleGotoOAuth = useCallback((e)=>{
-    e.preventDefault()
-    axios.get(`/prepare-auth?url=${router.asPath}`).then(res=>{
-      if (res.status === 200) {
-        location.href = publicRuntimeConfig.OAUTH_URL
-      } else {
-        console.log('jump fail', res)
-      }
-    }).catch(err=>{
-      console.log(err)
-    })
-    
-  },[router])
+  const handleGotoOAuth = useCallback(
+    e => {
+      e.preventDefault()
+      axios
+        .get(`/prepare-auth?url=${router.asPath}`)
+        .then(res => {
+          if (res.status === 200) {
+            location.href = publicRuntimeConfig.OAUTH_URL
+          } else {
+            console.log('jump fail', res)
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    [router]
+  )
   const footerStyle = {
     textAlign: 'center'
   }
@@ -60,14 +70,16 @@ function Lay({ children, user, logout, router }) {
         <Container element={<div className='header-inner' />}>
           <div className='header-left'>
             <div className='logo'>
-              <Icon type='github' style={githubIconStyle} />
+              <Link href='/'>
+                <Icon type='github' style={githubIconStyle} />
+              </Link>
             </div>
             <div>
               <Input.Search
                 placeholder='搜索仓库'
                 value={search}
                 onChange={handleSearchChange}
-                onSearch={handleOnSearch}
+                onSearch={handleSearch}
               />
             </div>
           </div>
@@ -117,7 +129,8 @@ function Lay({ children, user, logout, router }) {
             height: 100%;
           }
           .ant-layout {
-            height: 100%;
+            min-height: 100%;
+            background: #fff;
           }
           .ant-layout-header {
             padding-left: 0;

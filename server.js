@@ -8,6 +8,7 @@ const session = require('koa-session')
 const Redis = require('ioredis')
 const RedisSessionStore = require('./server/session-store')
 const myConfig = require('./config')
+const koaBody = require('koa-body')
 const auth = require('./server/auth')
 const api = require('./server/api')
 console.log('-----myConfig')
@@ -22,6 +23,7 @@ app.prepare().then(() => {
   const router = new Router()
 
   server.keys = ['Jokcy develop Github App']
+  server.use(koaBody())
   const SESSION_CONFIG = {
     key: 'jid',
     store: new RedisSessionStore(redis),
