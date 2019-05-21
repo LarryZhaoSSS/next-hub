@@ -1,10 +1,16 @@
 const api = require('../lib/api')
-import { Button, Icon , Tabs} from 'antd'
+import { useEffect } from 'react'
+import LRU from 'lru-cache'
+import { Button, Icon, Tabs } from 'antd'
 import getConfig from 'next/config'
 import { connect } from 'react-redux'
-import Router ,{withRouter} from 'next/router'
+import Router, { withRouter } from 'next/router'
 const { publicRuntimeConfig } = getConfig()
 import Repo from '../components/Repo'
+let cachedUserRepos, cachedUserStarredRepos
+const cache = new LRU({
+  maxAge: 10 * 60 *1000
+})
 function Index({ userRepos, userStarredRepos, user, router }) {
   console.log('userRepos')
   console.log(userRepos)
@@ -12,9 +18,17 @@ function Index({ userRepos, userStarredRepos, user, router }) {
   console.log('--star---')
   console.log(userStarredRepos)
   const tabKey = router.query.key || '1'
-  const handleTabChange = (activeKey) => {
+  const handleTabChange = activeKey => {
     Router.push(`/?key=${activeKey}`)
   }
+  useEffect(() => {
+    if (!isServer) {
+      // cachedUserRepos = userRepos
+      // cachedUserStarredRepos = userStarredRepos
+      cache.set('userRepos', userRepos)
+      cache.set('userStarredReops',userStarredRepos)
+    }
+  }, [userRepos, userStarredRepos])
   if (!user || !user.id) {
     return (
       <div className='root'>
@@ -100,6 +114,7 @@ function Index({ userRepos, userStarredRepos, user, router }) {
     </div>
   )
 }
+const isServer = typeof window === 'undefined'
 Index.getInitialProps = async ({ ctx, reduxStore }) => {
   const user = reduxStore.getState().user
   if (!user || !user.id) {
@@ -107,6 +122,15 @@ Index.getInitialProps = async ({ ctx, reduxStore }) => {
       isLogin: false
     }
   } else {
+    if (!isServer) {
+      if (cache.get('userRepos') && cache.get('userStarredRepos')) {
+        return {
+          userRepos: cache.get('userRepos'),
+          userStarredRepos: cache.get('userStarredRepos')
+        }
+      }
+    }
+
     const userRepos = await api.request(
       {
         url: `/user/repos`
@@ -121,6 +145,7 @@ Index.getInitialProps = async ({ ctx, reduxStore }) => {
       ctx.req,
       ctx.res
     )
+
     return {
       userRepos: userRepos.data,
       userStarredRepos: starResult.data,
