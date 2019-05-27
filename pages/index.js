@@ -7,6 +7,7 @@ import { connect } from 'react-redux'
 import Router, { withRouter } from 'next/router'
 const { publicRuntimeConfig } = getConfig()
 import Repo from '../components/Repo'
+import {cacheArray} from '../lib/repo-basic-cache'
 let cachedUserRepos, cachedUserStarredRepos
 const cache = new LRU({
   maxAge: 10 * 60 *1000
@@ -23,12 +24,16 @@ function Index({ userRepos, userStarredRepos, user, router }) {
   }
   useEffect(() => {
     if (!isServer) {
-      // cachedUserRepos = userRepos
-      // cachedUserStarredRepos = userStarredRepos
       cache.set('userRepos', userRepos)
       cache.set('userStarredReops',userStarredRepos)
     }
   }, [userRepos, userStarredRepos])
+  useEffect(()=>{
+    if (!isServer) {
+      cacheArray(userRepos)
+      cacheArray(userStarredRepos)
+    }
+  })
   if (!user || !user.id) {
     return (
       <div className='root'>

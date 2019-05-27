@@ -1,20 +1,30 @@
 import Repo from './Repo'
 import Link from 'next/link'
 import api from '../lib/api'
-import { withRouter} from 'next/router'
+import {useEffect} from 'react'
+import { withRouter } from 'next/router'
+import { get, cache } from '../lib/repo-basic-cache'
 function makeQuery(queryObject) {
-  const query = Object.entries(queryObject).reduce((result, entry) => {
-    result.push(entry.join('='))
-    return result
-  }, []).join('&')
+  const query = Object.entries(queryObject)
+    .reduce((result, entry) => {
+      result.push(entry.join('='))
+      return result
+    }, [])
+    .join('&')
   return `?${query}`
 }
-export default function(Comp, type='index') {
+const isServer = typeof window === 'undefined'
+export default function(Comp, type = 'index') {
   function WithDetail({ repoBasic, router, ...rest }) {
     console.log('-----detail-------')
     console.log(repoBasic)
     console.log(router)
     const query = makeQuery(router.query)
+    useEffect(()=>{
+      if(!isServer) {
+        cache(repoBasic)
+      }
+    })
     return (
       <div className='root'>
         <div className='repo-basic'>
@@ -56,18 +66,28 @@ export default function(Comp, type='index') {
       </div>
     )
   }
-  WithDetail.getInitialProps = async (context) => {
-    const {router, ctx} = context
+  WithDetail.getInitialProps = async context => {
+    const { router, ctx } = context
     const { owner, name } = ctx.query
+    const full_name = `${owner}/${name}`
+    let pageData = {}
+    if (Comp.getInitialProps) {
+      pageData = await Comp.getInitialProps(context)
+    }
+    if (get(full_name)) {
+      return {
+        repoBasic: get(full_name),
+        ...pageData
+      }
+    }
     const repoBasic = await api.request(
       { url: `/repos/${owner}/${name}` },
       ctx.req,
       ctx.res
     )
-    let pageData = {}
-    if(Comp.getInitialProps) {
-      pageData = await Comp.getInitialProps(context)
-    }
+    // if (!isServer) {
+    //   cache(repoBasic.data)
+    // }
     return {
       repoBasic: repoBasic.data,
       ...pageData

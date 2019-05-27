@@ -1,10 +1,11 @@
 import { withRouter } from 'next/router'
-import { memo, isValidElement } from 'react'
+import { memo, isValidElement, useEffect } from 'react'
 import Router from 'next/router'
 import { Row, Col, List, Pagination } from 'antd'
 import Link from 'next/link'
 const api = require('../lib/api')
 import Repo from '../components/Repo'
+import { cacheArray } from '../lib/repo-basic-cache'
 const LANGUAGES = ['JavaScript', 'TypeScrit', 'Java', 'C++']
 const SORT_TYPES = [
   {
@@ -63,15 +64,15 @@ const FilterLink = memo(({ name, query, lang, sort, order, page }) => {
 })
 function noop() {}
 const per_page = 30
+const isServer = typeof window === 'undefined'
 function Search({ router, repos }) {
-  console.log('------search-----')
-  console.log(repos)
   const { sort, order, lang, page } = router.query
-  console.log('--------lang')
-  console.log(router.query)
-  console.log(lang)
   const { ...querys } = router.query
-
+  useEffect(() => {
+    if (!isServer) {
+      cacheArray(repos.items)
+    }
+  })
   return (
     <div className='root'>
       <Row gutter={20}>
@@ -128,7 +129,7 @@ function Search({ router, repos }) {
             <Pagination
               pageSize={per_page}
               current={Number(page) || 1}
-              total={repos.total_count>1000?1000:repos.total_count}
+              total={repos.total_count > 1000 ? 1000 : repos.total_count}
               onChange={noop}
               itemRender={(page, type, ol) => {
                 const p =
@@ -155,7 +156,7 @@ function Search({ router, repos }) {
         }
         .pagination {
           padding: 20px;
-          text-align:center;
+          text-align: center;
         }
       `}</style>
     </div>
