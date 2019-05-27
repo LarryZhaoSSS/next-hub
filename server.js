@@ -27,7 +27,7 @@ app.prepare().then(() => {
   const SESSION_CONFIG = {
     key: 'jid',
     store: new RedisSessionStore(redis),
-    maxAge: 600 *1000
+    maxAge: 6000 *1000
   }
 
   server.use(session(SESSION_CONFIG, server))

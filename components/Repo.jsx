@@ -18,10 +18,10 @@ export default ({ repo }) => {
         </h3>
         <p className='repo-desc'>{repo.description}</p>
         <p className='other-info'>
-          {
-            repo.license ?  <span className='license'>{getLicense(repo.license)}</span>:null
-          }
-         
+          {repo.license ? (
+            <span className='license'>{getLicense(repo.license)}</span>
+          ) : null}
+
           <span className='last-updated'>{repo.updated_at}</span>
           <span className='open-issues'>{repo.open_issues_counter}</span>
         </p>
@@ -33,8 +33,8 @@ export default ({ repo }) => {
         </span>
       </div>
       <style jsx>{`
-        .root{
-          display:flex;
+        .root {
+          display: flex;
           justify-content: space-between;
           margin-top: 20px;
         }
@@ -45,21 +45,20 @@ export default ({ repo }) => {
           border-top: 1px solid #eee;
           padding-top: 20px;
         }
-        .repo-title{
+        .repo-title {
           font-size: 20px;
         }
-        .lang-star{
+        .lang-star {
           display: flex;
         }
         .lang-star > span {
           width: 120px;
-          text-align:right;
+          text-align: right;
         }
-        .repo-desc{
+        .repo-desc {
           width: 400px;
         }
-        
-        `}</style>
+      `}</style>
     </div>
   )
 }
