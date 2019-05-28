@@ -9,10 +9,12 @@ const Redis = require('ioredis')
 const RedisSessionStore = require('./server/session-store')
 const myConfig = require('./config')
 const koaBody = require('koa-body')
+const atob = require('atob')
 const auth = require('./server/auth')
 const api = require('./server/api')
 console.log('-----myConfig')
 console.log(myConfig)
+global.atob = atob
 const redis = new Redis({
   host: myConfig.myRedis.host,
   port: myConfig.myRedis.port,
