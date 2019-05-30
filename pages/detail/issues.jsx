@@ -2,33 +2,35 @@ import withRepoBasic from '../../components/with-repo-basic'
 import dynamic from 'next/dynamic'
 import { useState, useCallback } from 'react'
 import api from '../../lib/api'
-import { Avatar, Button } from 'antd'
+import { Avatar, Button, Select } from 'antd'
 import SearchUser from '../../components/SearchUser'
-const MdRenderer = dynamic(()=>import('../../components/MarkdownRender'))
-function IssueDetail ({issue}) {
+const MdRenderer = dynamic(() => import('../../components/MarkdownRender'))
+function IssueDetail({ issue }) {
   return (
-    <div className="root">
-      <MdRenderer content ={issue.body}/>
-      <div className="actions">
-        <Button href={issue.html_url} target="_blank">打开Issue页面</Button>
+    <div className='root'>
+      <MdRenderer content={issue.body} />
+      <div className='actions'>
+        <Button href={issue.html_url} target='_blank'>
+          打开Issue页面
+        </Button>
       </div>
       <style jsx>{`
-        .root{
+        .root {
           background: #fefefe;
           padding: 20px;
         }
-        .actions{
+        .actions {
           text-align: right;
         }
-        `}</style>
+      `}</style>
     </div>
   )
 }
 function IssueItem({ issue }) {
   const [showDetail, setShowDetail] = useState(false)
-  const toggleShowDetail = useCallback(()=>{
-    setShowDetail(detail=> !detail)
-  },[])
+  const toggleShowDetail = useCallback(() => {
+    setShowDetail(detail => !detail)
+  }, [])
   return (
     <div>
       <div className='issue'>
@@ -85,17 +87,74 @@ function IssueItem({ issue }) {
     </div>
   )
 }
-function Issues({ issues }) {
-  console.log(issues)
+function makeQuery(creator, state,labels) {
+  let creatorStr = creator ? `creator=${creator}`:''
+  let stateStr = state ? `state=${state}`:''
+  let labelStr = ``
+  if (labels && labels.length > 0) {
+    labelStr = `labels=${labels.join(',')}`
+  }
+  const arr = []
+  if (creatorStr) arr.push(creatorStr)
+  if(stateStr) arr.push(stateStr)
+  if(labelStr) arr.push(labelStr)
+  return `?${arr.join('&')}`
+}
+const Option = Select.Option
+function Issues({ initialIssues, labels,owner,name }) {
+  console.log(labels)
   const [creator, setCreator] = useState()
-  const handleCreatorChange = useCallback((value) => {
+  const [state, setState] = useState()
+  const [label, setLabel] = useState([])
+  const [issues, setIssues] = useState(initialIssues)
+  const handleCreatorChange = useCallback(value => {
     setCreator(value)
-  },[])
+  }, [])
+  const handleStateChange = useCallback(value => {
+    setState(value)
+  }, [])
+  const handleLabelChange = useCallback(value => {
+    setLabel(value)
+  }, [])
+  const handleSearch = () => {
+     api.request(
+      {
+        url: `/repos/${owner}/${name}/issues/${makeQuery(creator,state,label)}`
+      }
+    ).then(resp => setIssues(resp.data))
+  }
   return (
     <div className='root'>
-      <SearchUser onChange={handleCreatorChange} value={creator}/>
+      <div className='search'>
+        <SearchUser onChange={handleCreatorChange} value={creator} />
+        <Select
+          placeholder='状态'
+          onChange={handleStateChange}
+          value={state}
+          style={{ width: 200, marginLeft: 30 }}
+        >
+          <Option value='all'>all</Option>
+          <Option value='open'>open</Option>
+          <Option value='closed'>closed</Option>
+        </Select>
+        <Select
+          placeholder='label'
+          mode='multiple'
+          style={{ flexGrow: 1, marginLeft: 30, marginRight: 30 }}
+          onChange={handleLabelChange}
+          value={label}
+        >
+          {labels.map(la => (
+            <Option value={la.name} key={la.id}>
+              {la.name}
+            </Option>
+          ))}
+        </Select>
+        <Button type='primary' onClick={handleSearch}>搜索</Button>
+      </div>
+
       <div className='issues'>
-        {issues.map(issue => (
+        {initialIssues.map(issue => (
           <IssueItem issue={issue} key={issue.id} />
         ))}
       </div>
@@ -107,6 +166,9 @@ function Issues({ issues }) {
             margin-bottom: 20px;
             margin-top: 20px;
           }
+          .search {
+            display: flex;
+          }
         `}
       </style>
     </div>
@@ -114,16 +176,38 @@ function Issues({ issues }) {
 }
 Issues.getInitialProps = async ({ ctx }) => {
   const { owner, name } = ctx.query
-  const issuesResp = await api.request(
-    {
-      url: `/repos/${owner}/${name}/issues`
-    },
-    ctx.req,
-    ctx.res
-  )
+  // const issuesResp = await api.request(
+  //   {
+  //     url: `/repos/${owner}/${name}/issues`
+  //   },
+  //   ctx.req,
+  //   ctx.res
+  // )
+  // const labelsResp = await api.request({
+  //   url:`/repos/${owner}/${name}/labels`
+  // }, ctx.req, ctx.res)
+  const fetches = await Promise.all([
+    await api.request(
+      {
+        url: `/repos/${owner}/${name}/issues`
+      },
+      ctx.req,
+      ctx.res
+    ),
+    await api.request(
+      {
+        url: `/repos/${owner}/${name}/labels`
+      },
+      ctx.req,
+      ctx.res
+    )
+  ])
   return {
     text: 123,
-    issues: issuesResp.data
+    initialIssues: fetches[0].data,
+    owner,
+    name,
+    labels: fetches[1].data
   }
 }
 export default withRepoBasic(Issues, 'issues')
