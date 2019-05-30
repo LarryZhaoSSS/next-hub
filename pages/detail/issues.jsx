@@ -31,7 +31,10 @@ function IssueItem({ issue }) {
   const toggleShowDetail = useCallback(() => {
     setShowDetail(detail => !detail)
   }, [])
+  console.log('--------inIssue----item----')
+  console.log(issue)
   return (
+    
     <div>
       <div className='issue'>
         <Button
@@ -48,6 +51,9 @@ function IssueItem({ issue }) {
         <div className='main-info'>
           <h6>
             <span>{issue.title}</span>
+            {
+              issue.labels.map(label=><Label label={label} key={label.id}/>)
+            }
           </h6>
           <p className='sub-info'>
             <span>Updated at {issue.updated_at}</span>
@@ -99,6 +105,26 @@ function makeQuery(creator, state,labels) {
   if(stateStr) arr.push(stateStr)
   if(labelStr) arr.push(labelStr)
   return `?${arr.join('&')}`
+}
+function Label({label}) {
+  return (
+    <>
+      <span className='label' style={{ backgroundColor: '#${label.color }'}}>
+        {label.name}
+      </span>
+      <style jsx>{`
+        .label {
+          display: inline-block;
+          line-height: 20px;
+          margin-left: 15px;
+          padding:3px 10px;
+          border-radius: 3px;
+          font-size: 14px;
+        }
+        
+      `}</style>
+    </>
+  )
 }
 const Option = Select.Option
 function Issues({ initialIssues, labels,owner,name }) {
@@ -154,7 +180,7 @@ function Issues({ initialIssues, labels,owner,name }) {
       </div>
 
       <div className='issues'>
-        {initialIssues.map(issue => (
+        {issues.map(issue => (
           <IssueItem issue={issue} key={issue.id} />
         ))}
       </div>
