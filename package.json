@@ -25,7 +25,7 @@
     "lodash": "^4.17.11",
     "lru-cache": "^5.1.1",
     "markdown-it": "^8.4.2",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "next": "^8.0.3",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
